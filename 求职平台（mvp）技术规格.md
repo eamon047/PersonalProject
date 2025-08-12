@@ -369,6 +369,8 @@ ADMIN_PASSWORD=ChangeMe123!
 - based\_in 后续是否加入 `remote` 或其他城市？若加入，是否继续采用 0/1/2… 代码映射？
 - 公司端最简状态机（`shortlisted|rejected`）何时纳入 MVP？（目前放入 [后续]）
 - 招募人数上限采用 `max_hires`（录用数达阈值自动关闭）还是 `max_applications`（投递数達阈值即关闭）？
+- require_company_owner - 公司拥有者`权限作用：确保只有拥有公司的用户才能调用公司相关接口`
+- ensure_job_owned - 职位所有权检查 `作用：确保用户只能操作自己公司的职位`
 
 
 ## 14) 个人记录
