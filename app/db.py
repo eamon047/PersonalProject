@@ -1,5 +1,6 @@
 from sqlmodel import SQLModel, create_engine, Session
 from .config import settings
+from . import models  # noqa: F401 确保关系映射被注册
 
 # 创建数据库引擎
 engine = create_engine(

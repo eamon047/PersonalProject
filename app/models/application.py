@@ -1,4 +1,5 @@
 from sqlmodel import SQLModel, Field, Relationship
+from sqlalchemy import UniqueConstraint
 from typing import Optional, Dict, Any
 from enum import Enum
 
@@ -9,6 +10,9 @@ class ApplicationStatus(str, Enum):
 
 
 class Application(SQLModel, table=True):
+    __table_args__ = (
+        UniqueConstraint("user_id", "job_id", name="uq_application_user_job"),
+    )
     id: Optional[int] = Field(default=None, primary_key=True)
     user_id: int = Field(foreign_key="user.id")
     job_id: int = Field(foreign_key="job.id")
