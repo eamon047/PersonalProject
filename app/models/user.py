@@ -6,6 +6,7 @@ class User(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     email: str = Field(unique=True, index=True)
     password_hash: str
+    is_admin: bool = Field(default=False, description="是否为管理员")
     
     # 关系定义
     company: Optional["Company"] = Relationship(back_populates="owner")
