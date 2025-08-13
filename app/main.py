@@ -5,6 +5,9 @@ from .routers import auth, admin
 from .models.user import User
 from .security import get_password_hash
 from .config import settings
+from .routers import profile
+from .routers import companies
+from .routers import jobs
 
 app = FastAPI(title="Job Platform MVP")
 
@@ -44,3 +47,6 @@ def health_check():
 # 路由
 app.include_router(auth.router, prefix="/auth", tags=["auth"])
 app.include_router(admin.router, prefix="/admin", tags=["admin"])
+app.include_router(profile.router, prefix="/profile", tags=["profile"])
+app.include_router(companies.router, prefix="/companies", tags=["companies"])
+app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
