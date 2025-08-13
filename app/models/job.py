@@ -15,6 +15,7 @@ class Job(SQLModel, table=True):
     title: str = Field(max_length=120)
     position: Position
     based_in_code: int = Field(description="0=tokyo, 1=osaka")
+    # 整数代替文字(枚举类型的一种实现方式)：节省空间、查询快（数字比字符串好比对）、方便统一管理
     description: str = Field(max_length=10000)
     salary: int = Field(ge=0, description="万日元")
     

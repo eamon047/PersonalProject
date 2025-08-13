@@ -394,6 +394,42 @@ source venv/bin/activate
 创建Pydantic schemas - 请求响应模型
 创建API路由 - 一个一个实现各个功能模块
 
+4.1 Pydantic Schemas 创建
+[ ] app/schemas/profile.py - Profile请求/响应模型
+[ ] app/schemas/company.py - Company请求/响应模型
+[ ] app/schemas/job.py - Job请求/响应模型
+[ ] app/schemas/application.py - Application请求/响应模型
+[ ] app/schemas/common.py - 分页、筛选等通用模型
+
+4.2 API路由实现
+[ ] app/routers/profile.py - Profile管理API
+[ ] app/routers/companies.py - Company管理API
+[ ] app/routers/jobs.py - Job管理API (包含筛选功能)
+[ ] app/routers/applications.py - Application管理API
+[ ] 完善 app/routers/admin.py - Admin只读API
+
+4.3 业务逻辑实现
+[ ] app/services/applications.py - 投递快照生成、状态管理
+[ ] 权限检查函数 - 公司拥有者、职位所有权验证
+[ ] 数据验证工具 - 电话正则、年龄范围等
+
+4.4 工具函数
+[ ] app/utils/pagination.py - 分页工具
+[ ] app/utils/validators.py - 数据验证工具
+[ ] app/utils/errors.py - 统一错误处理
+
 第五步：测试和部署
 创建测试 - 单元测试
 创建部署配置 - Docker等
+
+5.1 测试实现
+[ ] 单元测试 - 每个API模块的测试
+[ ] 集成测试 - 完整业务流程测试
+[ ] 测试数据 - 种子数据、演示脚本
+
+5.2 部署配置
+[ ] Dockerfile - 容器化部署
+[ ] docker-compose.yml - 本地开发环境
+[ ] 部署文档 - Render/Railway部署说明
+
+ python -m app.main
