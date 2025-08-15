@@ -8,6 +8,7 @@ from .config import settings
 from .routers import profile
 from .routers import companies
 from .routers import jobs
+from .routers import applications
 
 app = FastAPI(title="Job Platform MVP")
 
@@ -50,3 +51,4 @@ app.include_router(admin.router, prefix="/admin", tags=["admin"])
 app.include_router(profile.router, prefix="/profile", tags=["profile"])
 app.include_router(companies.router, prefix="/companies", tags=["companies"])
 app.include_router(jobs.router, prefix="/jobs", tags=["jobs"])
+app.include_router(applications.router, prefix="/applications", tags=["applications"])

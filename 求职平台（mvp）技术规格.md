@@ -433,3 +433,120 @@ source venv/bin/activate
 [ ] 部署文档 - Render/Railway部署说明
 
  python -m app.main
+
+ ## 15) 学习内容
+ #### 有些路径以`/`结尾，而有的则没有
+```
+以 / 结尾的情况
+@router.post("/")  # 在"当前路由前缀下的集合"中创建资源
+不以 / 结尾的情况
+@router.post("/action")     # 执行特定动作（如认证）
+@router.get("/{resource_id}") # 获取特定资源
+@router.get("/me")          # 获取当前用户的特定资源
+```
+---
+- 认证路由（/auth）与业务资源路由（/companies, /jobs）有本质区别：
+```
+业务资源路由（需要区分集合和具体资源）
+# companies 路由
+@router.post("/")        # POST /companies/     → 在"公司集合"中创建
+@router.get("/me")       # GET  /companies/me   → 获取"我的具体公司"
+
+# jobs 路由  
+@router.post("/")        # POST /jobs/          → 在"职位集合"中创建
+@router.get("/{job_id}") # GET  /jobs/{job_id}  → 获取"具体职位"
+
+认证路由（不需要区分集合和具体资源）
+# auth 路由
+@router.post("/register") # POST /auth/register → 用户注册
+@router.post("/login")    # POST /auth/login    → 用户登录
+```
+关键区别在于认证不是"资源"
+- 公司、职位是"资源"
+可以有多个公司 → 需要集合概念
+可以有多个职位 → 需要集合概念
+所以需要区分 /（集合）和具体资源
+- 认证是"动作"
+注册不是"在用户集合中创建用户"
+登录不是"获取特定用户"
+它们是功能操作，不是资源管理
+---
+- 总结
+```
+# 集合操作（创建/列表）
+@router.post("/")           → /prefix/
+@router.get("/")            → /prefix/
+
+# 功能操作（认证、特殊动作）
+@router.post("/action")     → /prefix/action
+
+# 具体资源操作
+@router.get("/{id}")        → /prefix/{id}
+@router.get("/me")          → /prefix/me
+```
+
+#### Post, Put, Patch的区别
+方法	  用途	      幂等性	 数据完整性	      适用场景
+POST	  创建新资源	  ❌	    需要必要字段	  创建新记录
+PUT	    完全替换	    ✅	    需要所有字段	  完整更新/覆盖
+PATCH	  部分更新	    ✅	    只需要更新字段	选择性更新  
+
+幂等性定义
+幂等：多次调用产生相同结果
+非幂等：多次调用可能产生不同结果
+
+#### .env, env.example, app/config.py的区别
+1. env.example 文件
+作用：模板文件，告诉其他开发者需要哪些环境变量
+内容：环境变量的示例值和说明
+特点：不会被代码读取，只是参考文档
+2. .env 文件
+作用：实际的环境变量文件，包含真实的配置值
+内容：实际的环境变量值
+特点：会被代码读取，但通常不提交到版本控制
+3. config.py 文件
+作用：代码配置文件，定义默认值和读取环境变量
+内容：Python代码，使用pydantic-settings读取环境变量
+特点：代码逻辑，定义配置类的结构
+
+正确的优先级顺序
+`.env 文件 > config.py 中的默认值`
+
+实际工作流程
+
+1. 创建 .env 文件
+```
+# 复制 env.example 为 .env
+cp env.example .env
+
+# 然后修改 .env 文件中的实际值
+JWT_EXPIRE_MINUTES=120  # 改为2小时
+```
+
+2. config.py 自动读取
+```
+# app/config.py
+class Settings(BaseSettings):
+    jwt_expire_minutes: int = 60  # 默认值：60分钟
+    
+    class Config:
+        env_file = ".env"  # 告诉pydantic-settings读取.env文件
+```
+
+3. 实际效果
+```
+# 如果 .env 中有 JWT_EXPIRE_MINUTES=120
+# 那么实际使用的值是 120，不是默认的 60
+
+# 如果 .env 中没有设置 JWT_EXPIRE_MINUTES
+# 那么使用默认值 60
+```
+
+
+```
+# env.example 提交到版本控制
+# 告诉其他开发者需要哪些环境变量
+
+# .env 不提交到版本控制
+# 每个开发者有自己的本地配置
+```
