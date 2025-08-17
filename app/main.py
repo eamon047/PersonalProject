@@ -9,8 +9,18 @@ from .routers import profile
 from .routers import companies
 from .routers import jobs
 from .routers import applications
+from contextlib import asynccontextmanager
 
-app = FastAPI(title="Job Platform MVP")
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """应用生命周期管理"""
+    # 启动时执行
+    create_db_and_tables()
+    create_admin_user()
+    yield
+    # 关闭时执行（如果需要的话）
+
+app = FastAPI(title="Job Platform MVP", lifespan=lifespan)
 
 def create_admin_user():
     """创建种子管理员用户"""
@@ -32,14 +42,6 @@ def create_admin_user():
             print(f"✅ 管理员用户已创建: {settings.admin_email}")
         else:
             print(f"✅ 管理员用户已存在: {settings.admin_email}")
-
-@app.on_event("startup")
-def on_startup():
-    # 启动时确保数据库与表存在
-    create_db_and_tables()
-    
-    # 创建种子管理员
-    create_admin_user()
 
 @app.get("/health")
 def health_check():

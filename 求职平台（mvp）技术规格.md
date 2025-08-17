@@ -4,6 +4,8 @@
 
 ---
 
+source venv/bin/activate && uvicorn app.main:app --host 127.0.0.1 --port 8000
+
 ## 0) 范围与非目标
 
 **范围（MVP）**
@@ -541,7 +543,6 @@ class Settings(BaseSettings):
 # 如果 .env 中没有设置 JWT_EXPIRE_MINUTES
 # 那么使用默认值 60
 ```
-
 
 ```
 # env.example 提交到版本控制

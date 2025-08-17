@@ -9,6 +9,7 @@ from ..models.user import User
 from ..models.job import Job
 from ..models.application import Application, ApplicationStatus
 from ..models.candidate_profile import CandidateProfile
+from ..models.company import Company
 from ..schemas.application import ApplicationCreateRequest, ApplicationResponse
 
 router = APIRouter()
@@ -107,3 +108,59 @@ def cancel_application(
     session.refresh(application)
 
     return {"status": application.status}
+
+
+@router.get("/company")
+def get_company_applications(
+    job_id: int = None,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """公司端查看投递列表，支持按职位筛选"""
+    # 检查当前用户是否拥有公司
+    company = session.exec(
+        select(Company).where(Company.owner_id == current_user.id)
+    ).first()
+    if company is None:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="需要公司拥有者权限")
+
+    # 构建查询：只查询该公司职位的投递
+    stmt = select(Application).join(Job).where(Job.company_id == company.id)
+    
+    # 如果指定了job_id，进一步筛选
+    if job_id is not None:
+        stmt = stmt.where(Application.job_id == job_id)
+
+    applications = session.exec(stmt).all()
+    
+    # 返回投递详情，包含候选人信息
+    result = []
+    for app in applications:
+        # 获取候选人资料
+        profile = session.exec(
+            select(CandidateProfile).where(CandidateProfile.user_id == app.user_id)
+        ).first()
+        
+        # 获取职位信息
+        job = session.get(Job, app.job_id)
+        
+        result.append({
+            "id": app.id,
+            "status": app.status,
+            "application_note": app.application_note,
+            "candidate": {
+                "user_id": app.user_id,
+                "full_name": profile.full_name if profile else "未知",
+                "age": profile.age if profile else None,
+                "gender": profile.gender if profile else None,
+                "phone": profile.phone if profile else None,
+                "intro": profile.intro if profile else None,
+            },
+            "job": {
+                "id": job.id,
+                "title": job.title,
+                "position": job.position,
+            } if job else None,
+        })
+    
+    return result
