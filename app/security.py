@@ -8,7 +8,7 @@ from .config import settings
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 # JWT相关函数
-# data 是要放进 token 里的“声明/信息（claims）”，比如“这个 token 属于谁（sub）”“角色是什么
+# data 是要放进 token 里的“声明/信息（claims）”，比如“这个 token 属于谁（sub）”角色是什么
 # 例如：{"sub": str(user.id), "role": "candidate"}
 # 令牌中包含的内容；Header（算法信息）,Payload（用户信息、过期时间等）, Signature（签名，防篡改）
 def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:

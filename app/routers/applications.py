@@ -130,6 +130,10 @@ def get_company_applications(
     # 如果指定了job_id，进一步筛选
     if job_id is not None:
         stmt = stmt.where(Application.job_id == job_id)
+        # 验证该职位确实属于当前公司
+        job = session.get(Job, job_id)
+        if job is None or job.company_id != company.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="职位不存在或无权限")
 
     applications = session.exec(stmt).all()
     

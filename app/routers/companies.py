@@ -40,7 +40,7 @@ def get_my_company(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="未找到公司")
 
     # 简单统计：该公司下的职位数量与总投递数量
-    job_ids = [j[0] for j in session.exec(select(Job.id).where(Job.company_id == company.id)).all()]
+    job_ids = [j for j in session.exec(select(Job.id).where(Job.company_id == company.id)).all()]
     jobs_count = len(job_ids)
     if job_ids:
         applications_count = len(
