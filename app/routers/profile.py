@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, File, UploadFile
 from sqlmodel import Session, select
 
 from ..db import get_session
@@ -6,6 +6,7 @@ from ..deps import get_current_user
 from ..models.candidate_profile import CandidateProfile
 from ..models.user import User
 from ..schemas.profile import ProfileResponse, ProfileUpdateRequest
+from ..services.pdf_analyzer import PDFAnalyzer
 
 router = APIRouter()
 
@@ -68,3 +69,55 @@ def upsert_profile(
         phone=profile.phone,
         intro=profile.intro,
     )
+
+
+@router.post("/upload-pdf")
+async def upload_pdf_and_analyze(
+    file: UploadFile = File(..., description="上传的PDF简历文件"),
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    """
+    上传PDF简历并自动分析，提取CandidateProfile需要的字段
+    
+    - 支持PDF格式文件
+    - 使用OpenAI GPT自动分析简历内容
+    - 提取姓名、年龄、性别、电话、个人介绍等信息
+    - 验证信息完整性，不完整时返回错误提示
+    
+    成功时直接返回提取的数据，可直接用于PUT /profile端点
+    """
+    
+    # 验证文件类型
+    if not file.filename.lower().endswith('.pdf'):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="只支持PDF文件格式"
+        )
+    
+    # 验证文件大小（限制为10MB）
+    if file.size and file.size > 10 * 1024 * 1024:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, 
+            detail="文件大小不能超过10MB"
+        )
+    
+    try:
+        # 创建PDF分析器实例
+        analyzer = PDFAnalyzer()
+        
+        # 分析PDF文件
+        result = analyzer.analyze_pdf(file.file)
+        
+        # 成功时直接返回提取的数据，符合PUT /profile的格式
+        return result["extracted_data"]
+        
+    except HTTPException:
+        # 重新抛出HTTP异常
+        raise
+    except Exception as e:
+        # 处理其他未知错误
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"PDF处理过程中发生未知错误: {str(e)}"
+        )

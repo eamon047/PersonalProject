@@ -17,6 +17,9 @@ class Settings(BaseSettings):
     admin_email: str = "eamonzhaowork@gmail.com"
     admin_password: str = "zym1010."
     
+    # OpenAI API配置
+    openai_api_key: str = ""
+    
     class Config:
         env_file = ".env"
         case_sensitive = False
