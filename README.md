@@ -12,8 +12,9 @@
 - 🏗️ **数据建模** - 完整的数据模型设计
 - 🔐 **认证授权** - JWT + 角色权限系统
 - 💾 **数据库设计** - SQLModel + SQLite，支持关系查询
-- 📊 **业务逻辑** - 职位发布、投递管理、状态流转
-- 🔍 **筛选查询** - 多条件筛选和分页
+- 📊 **业务逻辑** - 职位发布、投递管理、状态管理
+- 🔍 **筛选查询** - 多条件筛选
+- 🤖 **AI智能解析** - OpenAI GPT-4o-mini自动简历分析
 - 🧪 **测试覆盖** - 完整的测试体系
 - 🚀 **部署就绪** - 支持容器化部署
 
@@ -27,14 +28,27 @@
 ### 🏢 业务流程
 1. **企业发布职位** → 设置职位信息、薪资、地点
 2. **候选人投递** → 填写表单、提交申请
-3. **企业筛选** → 查看投递、处理申请状态
-4. **状态管理** → 投递状态流转和记录
+3. **企业筛选** → 查看投递、管理申请
+4. **状态管理** → 投递状态记录和管理
+
+### 🤖 AI智能简历解析流程
+1. **PDF上传** → 支持标准PDF格式，最大10MB
+2. **文本提取** → 使用PyPDF2提取PDF文本内容
+3. **AI分析** → OpenAI GPT-4o-mini智能解析简历信息
+4. **信息提取** → 自动识别姓名、年龄、性别、电话、个人介绍
+5. **数据验证** → 验证提取信息的完整性和格式
+6. **一键填充** → 返回结构化数据，可直接用于Profile创建
 
 ### 🔍 筛选功能
 - **职位方向**: `frontend` | `backend` | `fullstack`
-- **工作地点**: `tokyo` | `osaka`
-- **薪资范围**: 自定义区间筛选
-- **分页查询**: 支持分页和排序
+- **工作地点**: `0=tokyo` | `1=osaka` (使用整数代码)
+- **薪资范围**: 自定义区间筛选（万日元）
+
+### 🤖 AI智能功能
+- **PDF简历解析**: 支持PDF上传，AI自动提取候选人信息
+- **智能信息提取**: 使用OpenAI GPT-4o-mini自动识别姓名、年龄、性别、电话、个人介绍
+- **数据标准化**: 自动格式化和验证提取的信息
+- **一键填充**: 提取的信息可直接用于Profile创建和更新
 
 ## 🏗️ 技术架构
 
@@ -49,6 +63,8 @@ FastAPI + SQLModel + SQLite + JWT + Pydantic
 - **SQLite**: MVP阶段使用，便于部署和演示
 - **JWT**: 安全的用户认证系统
 - **Pydantic**: 强大的数据验证和序列化
+- **OpenAI GPT-4o-mini**: AI智能简历解析
+- **PyPDF2**: PDF文本提取和处理
 
 ### 项目结构
 ```
@@ -79,6 +95,8 @@ app/
 │   ├── companies.py    # 公司管理
 │   ├── jobs.py         # 职位管理
 │   └── applications.py # 投递管理
+├── services/           # 业务服务
+│   └── pdf_analyzer.py # PDF分析和AI解析服务
 └── tests/              # 测试文件
 ```
 
@@ -181,6 +199,16 @@ Authorization: Bearer <your_jwt_token>
 }
 ```
 
+#### 上传PDF简历（AI智能解析）
+```http
+POST /profile/upload-pdf
+Authorization: Bearer <your_jwt_token>
+Content-Type: multipart/form-data
+
+# 上传PDF文件，AI自动提取信息
+# 返回提取的候选人信息，可直接用于PUT /profile
+```
+
 ### 🏢 公司管理
 
 #### 创建公司
@@ -210,7 +238,7 @@ Authorization: Bearer <your_jwt_token>
 {
   "title": "Python后端工程师",
   "position": "backend",
-  "based_in": "tokyo",
+  "based_in_code": 0,
   "description": "负责公司核心业务的后端开发",
   "salary": 50
 }
@@ -218,7 +246,7 @@ Authorization: Bearer <your_jwt_token>
 
 #### 获取职位列表
 ```http
-GET /jobs?position=backend&based_in=tokyo&page=1&limit=20
+GET /jobs?position=backend&based_in_code=0&salary_min=40&salary_max=60
 ```
 
 #### 获取职位详情
@@ -235,8 +263,7 @@ Authorization: Bearer <your_jwt_token>
 
 {
   "job_id": 1,
-  "application_note": "我对这个职位很感兴趣",
-  "expected_salary": 45
+  "application_note": "我对这个职位很感兴趣"
 }
 ```
 
@@ -256,19 +283,9 @@ Authorization: Bearer <your_jwt_token>
 
 #### 职位筛选参数
 - `position`: `frontend` | `backend` | `fullstack`
-- `based_in`: `tokyo` | `osaka`
+- `based_in_code`: `0` (tokyo) | `1` (osaka)
 - `salary_min`: 最低薪资（万日元）
 - `salary_max`: 最高薪资（万日元）
-- `page`: 页码（默认1）
-- `limit`: 每页数量（默认20，最大100）
-
-#### 筛选示例
-```http
-# 筛选东京地区的后端职位，薪资40-60万日元
-GET /jobs?position=backend&based_in=tokyo&salary_min=40&salary_max=60
-
-# 分页查询
-GET /jobs?page=2&limit=10
 ```
 
 ## 🗄️ 数据模型
@@ -296,7 +313,7 @@ Application (投递)
 ### 关键设计特点
 - **快照机制**: 投递时保存候选人资料快照，确保数据一致性
 - **唯一约束**: 防止重复投递 `(user_id, job_id)`
-- **状态管理**: 完整的投递状态流转
+- **状态管理**: 投递状态管理（applied, cancelled_by_candidate）
 - **权限控制**: 基于角色的数据访问控制
 
 ## 🧪 测试
@@ -323,7 +340,8 @@ tests/
 ├── test_profile.py     # 资料管理测试
 ├── test_companies.py   # 公司管理测试
 ├── test_jobs.py        # 职位管理测试
-└── test_applications.py # 投递管理测试
+├── test_applications.py # 投递管理测试
+└── test_pdf_analyzer.py # PDF分析服务测试
 ```
 
 ## 🚀 部署
@@ -347,6 +365,7 @@ JWT_EXPIRE_MINUTES=1440  # 24小时
 | `JWT_EXPIRE_MINUTES` | JWT过期时间(分钟) | `60` |
 | `ADMIN_EMAIL` | 管理员邮箱 | `eamonzhaowork@gmail.com` |
 | `ADMIN_PASSWORD` | 管理员密码 | `zym1010.` |
+| `OPENAI_API_KEY` | OpenAI API密钥 | `your-openai-api-key-here` |
 
 ## 🔧 开发指南
 
