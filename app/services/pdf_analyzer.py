@@ -88,7 +88,7 @@ class PDFAnalyzer:
                 "age": 年龄数字或null,
                 "gender": "性别值或无法确定",
                 "phone": "电话号码或null",
-                "intro": "第一人称视角的个人介绍或null"
+                "intro": "第一人称视角、自我介绍形式的个人介绍或null"
             }}
             """
             
