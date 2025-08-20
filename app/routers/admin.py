@@ -54,6 +54,7 @@ def get_all_companies(
             id=c.id,
             owner_id=c.owner_id,
             name=c.name,
+            website=c.website
         )
         for c in companies
     ]

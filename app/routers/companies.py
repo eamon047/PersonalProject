@@ -22,7 +22,7 @@ def create_company(
     if exists:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="该用户已拥有公司")
 
-    company = Company(owner_id=current_user.id, name=payload.name)
+    company = Company(owner_id=current_user.id, name=payload.name, website=payload.website)
     session.add(company)
     session.commit()
     session.refresh(company)
@@ -50,6 +50,6 @@ def get_my_company(
         applications_count = 0
 
     return {
-        "company": CompanyResponse(id=company.id, owner_id=company.owner_id, name=company.name),
+        "company": CompanyResponse(id=company.id, owner_id=company.owner_id, name=company.name, website=company.website),
         "stats": {"jobs": jobs_count, "applications": applications_count},
     }

@@ -1,0 +1,29 @@
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual env / IDE
+.venv/
+.envrc
+.vscode/
+.idea/
+
+# Git
+.git
+.gitignore
+
+# Tests
+tests/
+
+# Local data / artifacts
+app.db
+*.sqlite
+*.log
+dist/
+build/
+
+# OS / Mac
+.DS_Store
+__MACOSX/
