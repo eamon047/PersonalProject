@@ -13,7 +13,7 @@ def register(payload: RegisterRequest, session: Session = Depends(get_session)):
     # 邮箱唯一性检查
     exists = session.exec(select(User).where(User.email == payload.email)).first()
     if exists:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="邮箱已被注册")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Email already registered")
     
     # 创建用户
     user = User(email=payload.email, password_hash=get_password_hash(payload.password))
@@ -26,7 +26,7 @@ def register(payload: RegisterRequest, session: Session = Depends(get_session)):
 def login(payload: LoginRequest, session: Session = Depends(get_session)):
     user = session.exec(select(User).where(User.email == payload.email)).first()
     if not user or not verify_password(payload.password, user.password_hash):
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="邮箱或密码错误")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Worng email or password")
     
     token = create_access_token({"sub": str(user.id)})
     return TokenResponse(access_token=token)

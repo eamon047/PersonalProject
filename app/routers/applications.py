@@ -24,7 +24,7 @@ def create_application(
     # 检查职位是否存在
     job = session.get(Job, payload.job_id)
     if job is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="职位不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="occupation not found")
 
     # 检查是否已投递过该职位
     existing = session.exec(
@@ -34,14 +34,14 @@ def create_application(
         )
     ).first()
     if existing:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="已投递过该职位")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="already applied to this job")
 
     # 获取候选人资料（用于快照）
     profile = session.exec(
         select(CandidateProfile).where(CandidateProfile.user_id == current_user.id)
     ).first()
     if profile is None:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="请先完善个人资料")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="please complete your candidate profile before applying")
 
     # 创建投递记录
     application = Application(
@@ -92,15 +92,15 @@ def cancel_application(
 ):
     application = session.get(Application, application_id)
     if application is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="投递记录不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="application not found")
 
     # 权限：仅本人可取消
     if application.user_id != current_user.id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="无权操作该投递")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="no permission to cancel this application")
 
     # 检查状态：已取消的不可再次取消
     if application.status == ApplicationStatus.cancelled_by_candidate:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="该投递已取消")
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="application already cancelled")
 
     application.status = ApplicationStatus.cancelled_by_candidate
     session.add(application)
@@ -116,13 +116,12 @@ def get_company_applications(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ):
-    """公司端查看投递列表，支持按职位筛选"""
     # 检查当前用户是否拥有公司
     company = session.exec(
         select(Company).where(Company.owner_id == current_user.id)
     ).first()
     if company is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="需要公司拥有者权限")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="no company associated with the user")
 
     # 构建查询：只查询该公司职位的投递
     stmt = select(Application).join(Job).where(Job.company_id == company.id)
@@ -133,7 +132,7 @@ def get_company_applications(
         # 验证该职位确实属于当前公司
         job = session.get(Job, job_id)
         if job is None or job.company_id != company.id:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="职位不存在或无权限")
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="occupation not found or does not belong to your company")
 
     applications = session.exec(stmt).all()
     

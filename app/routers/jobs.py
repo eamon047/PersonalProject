@@ -25,7 +25,7 @@ def create_job(
 ):
     company = _get_user_company(session, current_user.id)
     if company is None:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="需要公司拥有者权限")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="no company associated with the user")
 
     job = Job(
         company_id=company.id,
@@ -87,7 +87,7 @@ def list_jobs(
 def get_job(job_id: int, session: Session = Depends(get_session)):
     job = session.get(Job, job_id)
     if job is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="职位不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="occupation not found")
     return JobResponse(
         id=job.id,
         company_id=job.company_id,
@@ -108,12 +108,12 @@ def update_job(
 ):
     job = session.get(Job, job_id)
     if job is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="职位不存在")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="occupation not found")
 
     # 权限：仅职位所属公司的拥有者可编辑
     company = _get_user_company(session, current_user.id)
     if company is None or company.id != job.company_id:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="无权操作该职位")
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="no permission to edit this job")
 
     if payload.title is not None:
         job.title = payload.title

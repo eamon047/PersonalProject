@@ -20,7 +20,7 @@ def create_company(
 ):
     exists = session.exec(select(Company).where(Company.owner_id == current_user.id)).first()
     if exists:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="该用户已拥有公司")
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="the user already has a company")
 
     company = Company(owner_id=current_user.id, name=payload.name, website=payload.website)
     session.add(company)
@@ -37,7 +37,7 @@ def get_my_company(
 ):
     company = session.exec(select(Company).where(Company.owner_id == current_user.id)).first()
     if company is None:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="未找到公司")
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="company not found")
 
     # 简单统计：该公司下的职位数量与总投递数量
     job_ids = [j for j in session.exec(select(Job.id).where(Job.company_id == company.id)).all()]
