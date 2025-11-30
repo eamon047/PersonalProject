@@ -10,10 +10,16 @@ from ..models.job import Job
 from ..models.application import Application, ApplicationStatus
 from ..models.candidate_profile import CandidateProfile
 from ..models.company import Company
-from ..schemas.application import ApplicationCreateRequest, ApplicationResponse
+from ..schemas.application import (
+    ApplicationCreateRequest,
+    ApplicationResponse,
+    MotivationReviewRequest,
+    MotivationReviewResponse,
+)
+from ..services.motivation_review import MotivationReviewService
 
 router = APIRouter()
-
+motivation_review_service = MotivationReviewService()
 
 @router.post("/", status_code=status.HTTP_201_CREATED, response_model=ApplicationResponse)
 def create_application(
@@ -109,6 +115,38 @@ def cancel_application(
 
     return {"status": application.status}
 
+@router.post(
+    "/motivation-review",
+    response_model=MotivationReviewResponse,
+    status_code=status.HTTP_200_OK,
+)
+def preview_motivation_before_apply(
+    payload: MotivationReviewRequest,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+):
+    # 1. 取得职位信息
+    job = session.get(Job, payload.job_id)
+    if job is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="职位不存在"
+        )
+
+    # 2. 取得候选人 Profile（可能为空）
+    profile = session.exec(
+        select(CandidateProfile).where(
+            CandidateProfile.user_id == current_user.id
+        )
+    ).first()
+
+    # 3. 调用动机分析服务，只做分析，不改数据库
+    result = motivation_review_service.review_motivation(
+        raw_motivation=payload.raw_motivation,
+        job=job,
+        profile=profile,
+    )
+    # result 是 {"feedback": "..."}，FastAPI 会按 MotivationReviewResponse 校验
+    return result
 
 @router.get("/company")
 def get_company_applications(

@@ -15,3 +15,11 @@ class ApplicationResponse(BaseModel):
     job_id: int
     status: ApplicationStatus
     application_note: Optional[str] = None
+
+class MotivationReviewRequest(BaseModel):
+    job_id: int
+    raw_motivation: str
+
+
+class MotivationReviewResponse(BaseModel):
+    feedback: str
